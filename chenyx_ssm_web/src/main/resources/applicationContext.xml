@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context.xsd
+           http://www.springframework.org/schema/tx
+           http://www.springframework.org/schema/tx/spring-tx.xsd
+           http://www.springframework.org/schema/aop
+           http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!--开启注释扫描，管理service和dao-->
+    <context:component-scan base-package="com.chenyx.ssm.service"></context:component-scan>
+    <context:component-scan base-package="com.chenyx.ssm.dao"></context:component-scan>
+
+    <!--扫描dao接口-->
+    <bean id="mapperScanner" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.chenyx.ssm.dao"/>
+    </bean>
+
+    <!-- 加载数据库属性文件 -->
+    <bean id="config" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+
+                <value>classpath:db.properties</value>
+                <!--
+                <value>classpath:Druid.properties</value>
+                -->
+            </list>
+        </property>
+    </bean>
+
+    <!-- 配置数据库连接池（调用DBCP连接池） -->
+     <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+    	<property name="driverClassName" value="${driver}"/>
+    	<property name="url" value="${url}"/>
+    	<property name="username" value="${username}"/>
+    	<property name="password" value="${password}"/>
+    	<property name="maxActive" value="${maxActive}"/>
+    	<property name="maxIdle" value="${maxIdle}"/>
+    </bean>
+
+    <!--将Mybatics的SqlSessionFactory对象交给Spring来管理  -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <!--传入PageHeIper的插件-->
+        <property name="plugins" >
+        <array>
+           <!--传入插件的对象-->
+            <bean class="com.github.pagehelper.PageInterceptor">
+                <property name="properties">
+                <props>
+                    <prop key="helperDialect" >oracle</prop>
+                    <prop key="reasonable" >true</prop>
+                </props>
+               </property>
+            </bean>
+        </array>
+        </property>
+    </bean>
+
+    <!--aop面向切面，切面就是切入点和通知面-->
+    <!--配置事务管理器-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+
+</beans>
